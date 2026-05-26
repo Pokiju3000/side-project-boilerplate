@@ -1,6 +1,6 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "pokiju3000/side-project-boilerplate",
     "type": "project",
     "description": "Internal side-project boilerplate with Azure auth, queues, diagnostics, and a polished Blade shell.",
     "keywords": ["laravel", "boilerplate", "internal-tools"],
