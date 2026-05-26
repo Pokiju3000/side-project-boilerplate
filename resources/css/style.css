@@ -1,0 +1,8 @@
+#preview-container {
+    border: 1px solid #ccc;
+    padding: 20px;
+    margin-top: 20px;
+    width: 3.5in;
+    height: 5in;
+    display: inline-block;
+}
