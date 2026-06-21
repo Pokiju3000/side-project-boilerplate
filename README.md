@@ -1,74 +1,65 @@
-# Side Project Boilerplate
+# DeliveryOps
 
-Starter Laravel pour petits outils internes avec un visuel poli, une connexion Azure AD, une page de diagnostic, une queue et un scheduler déjà câblés.
+Laravel demo for internal operations teams that need to coordinate client projects from intake to planning, validation, budget tracking, imports and diagnostics.
 
-L'objectif est de partir vite sans garder de logique métier spécifique au projet source.
+This repository is designed as a portfolio-safe project: the domain, data, client names and workflows are fictional, while the implementation demonstrates reusable patterns for complex business applications.
 
-## Commandes pour l'installation locale
+## What It Demonstrates
 
+- Microsoft Azure AD authentication through Socialite.
+- Optional local demo login for portfolio review.
+- Group-based access hooks for regular and admin users.
+- Client project dashboard with operational indicators.
+- Service lines, delivery templates and project ownership.
+- Delivery planning matrix by activity and week.
+- Validation center for blocked projects, budget gaps and planning mismatches.
+- Project budget summary with revenue, costs, margin and budget lines.
+- External import monitor with sync freshness, record counts and warnings.
+- Activity history and support resources.
+- Admin diagnostics for PHP, database, cache, queue worker and scheduler.
+- Queue heartbeat and scheduled maintenance task.
+
+## Local Setup
 
 ```powershell
 composer install
 copy .env.example .env
 php artisan key:generate
-php artisan migrate
+php artisan migrate --seed
 cmd /c npm install
 cmd /c npm run build
+php artisan serve
 ```
 
-## Pourquoi
+Then open `http://127.0.0.1:8000`.
 
-Ce boilerplate sert à démarrer rapidement de petits outils internes Laravel dans un contexte organisationnel : authentification Microsoft, contrôle d'accès par groupes Azure, queue, scheduler, diagnostic applicatif et base visuelle cohérente.
+Demo access is enabled in `.env.example`:
 
-Il est conçu pour démontrer une structure réutilisable, sécuritaire et maintenable, sans inclure de logique métier ni de données provenant d'un projet réel.
+- Email: `demo@example.test`
+- Local demo button: visible when `DEMO_ACCESS_ENABLED=true`
 
+The demo login creates/authenticates a local user and the seeder provides fictional portfolio data.
 
-## Sécurité et confidentialité
+## Main Screens
 
-Ce dépôt ne contient aucun code propriétaire, aucune donnée réelle, aucun nom d'organisation interne, aucun secret et aucun endpoint privé.
+- `/dashboard` - control room with priority projects, validation alerts and recent activity.
+- `/projects` - project list grouped around status, plan and budget readiness.
+- `/projects/{id}` - project detail with delivery matrix, budget and audit trail.
+- `/validation` - quality gate view inspired by real operational review workflows.
+- `/imports` - external sync monitor for CRM, ERP and timesheet-style feeds.
+- `/resources` - support resources and activity history.
+- `/admin/diagnostic` - operational health checks for services to verify first during an incident.
 
-Les variables sensibles doivent être configurées dans le fichier `.env` et ne doivent jamais être committées.
+## Privacy
 
+This project does not include private institutional code, real data, internal endpoints, secrets or organization-specific naming. It keeps the reusable application architecture and process ideas while moving the domain to fictional client delivery operations.
 
-## Ce qui est volontairement générique
+## Stack
 
-* Aucune logique métier spécifique.
-* Aucun modèle de données propre à une organisation.
-* Aucun appel vers des systèmes internes.
-* Aucun exemple avec des données réelles.
-* Authentification Azure configurable par variables d'environnement.
-
-
-## Inclus
-
-* Laravel 13, Blade, Tailwind CSS et Alpine.js.
-* Connexion Microsoft Azure AD via Socialite.
-* Mode démo optionnel pour simuler une session sans Azure en local.
-* Accès protégé par groupes Azure :
-  * `AZURE_ADMIN_GROUP_ID` pour les pages admin.
-  * `AZURE_USER_GROUP_ID` pour les utilisateurs réguliers.
-* Dashboard minimal.
-* Page admin `/admin/diagnostic`.
-* Queue database et heartbeat du worker.
-* Scheduler Laravel avec une tâche d'entretien de base.
-* Scripts Composer pour le setup, le dev, les tests et le déploiement final.
-
-## Prérequis
-
-* PHP 8.3 ou plus récent.
-* Composer.
-* Node.js et npm.
-* Une base de données MySQL, MariaDB, PostgreSQL, SQL Server ou SQLite.
-* Une application Azure enregistrée si l'authentification Microsoft est utilisée.
-
-
-
-
-
-## Captures d'écran
-![Page de connexion](public/images/Demo%20-%20Login.png)
-
-![Dashboard](public/images/Demo%20-%20Dashboard.png)
-
-![Page de diagnostic](public/images/Demo%20-%20Diagnostic.png)
-
+- Laravel 13
+- Blade
+- Tailwind CSS
+- Alpine.js
+- Laravel Socialite
+- Microsoft Azure Socialite provider
+- Database queue driver

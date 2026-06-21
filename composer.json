@@ -1,9 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "pokiju3000/side-project-boilerplate",
+    "name": "pokiju3000/delivery-ops",
     "type": "project",
-    "description": "Internal side-project boilerplate with Azure auth, queues, diagnostics, and a polished Blade shell.",
-    "keywords": ["laravel", "boilerplate", "internal-tools"],
+    "description": "Portfolio-safe Laravel demo for client delivery operations, planning, validation, budgets, imports, and diagnostics.",
+    "keywords": ["laravel", "portfolio", "internal-tools", "operations"],
     "license": "MIT",
     "require": {
         "php": "^8.3",

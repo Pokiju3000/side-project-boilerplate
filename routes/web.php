@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\Admin\HealthDiagnosticController;
 use App\Http\Controllers\Auth\AzureAuthController;
-use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DeliveryOpsController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard');
@@ -18,7 +18,12 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/logout', [AzureAuthController::class, 'logout'])->name('logout');
 
     Route::middleware('azure.access')->group(function (): void {
-        Route::get('/dashboard', DashboardController::class)->name('dashboard');
+        Route::get('/dashboard', [DeliveryOpsController::class, 'dashboard'])->name('dashboard');
+        Route::get('/projects', [DeliveryOpsController::class, 'projects'])->name('projects.index');
+        Route::get('/projects/{project}', [DeliveryOpsController::class, 'project'])->name('projects.show');
+        Route::get('/validation', [DeliveryOpsController::class, 'validation'])->name('operations.validation');
+        Route::get('/imports', [DeliveryOpsController::class, 'imports'])->name('operations.imports');
+        Route::get('/resources', [DeliveryOpsController::class, 'resources'])->name('operations.resources');
 
         Route::get('/admin/diagnostic', [HealthDiagnosticController::class, 'index'])
             ->middleware('azure.admin')

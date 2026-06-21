@@ -24,7 +24,7 @@ class AccessTest extends TestCase
             ->actingAs($user)
             ->get('/dashboard')
             ->assertOk()
-            ->assertSee('Dashboard');
+            ->assertSee('Client delivery control room');
     }
 
     public function test_demo_access_can_open_dashboard_when_enabled(): void
@@ -41,7 +41,7 @@ class AccessTest extends TestCase
 
         $this->get('/dashboard')
             ->assertOk()
-            ->assertSee('Dashboard');
+            ->assertSee('Client delivery control room');
     }
 
     public function test_demo_access_is_hidden_when_disabled(): void
