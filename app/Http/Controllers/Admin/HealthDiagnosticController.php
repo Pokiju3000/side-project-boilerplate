@@ -3,6 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
+use App\Models\ClientProject;
+use App\Models\DeliveryPlan;
+use App\Models\ExternalImportRun;
+use App\Models\ProjectBudget;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -13,44 +18,56 @@ class HealthDiagnosticController extends Controller
 {
     public function index(): View
     {
+        $checks = [
+            $this->checkPhp(),
+            $this->checkDatabase(),
+            $this->checkCache(),
+            $this->checkQueueWorker(),
+            $this->checkScheduler(),
+            $this->checkProjectPortfolio(),
+            $this->checkPlanningGate(),
+            $this->checkBudgetReadiness(),
+            $this->checkImportFreshness(),
+            $this->checkActivityTrail(),
+        ];
+
         return view('admin.diagnostics', [
-            'checks' => [
-                'php' => $this->checkPhp(),
-                'database' => $this->checkDatabase(),
-                'cache' => $this->checkCache(),
-                'queue' => $this->checkQueueWorker(),
-                'scheduler' => $this->checkScheduler(),
+            'diagnosticPayload' => [
+                'eyebrow' => __('portfolio.diagnostic.eyebrow'),
+                'title' => __('portfolio.diagnostic.title'),
+                'intro' => __('portfolio.diagnostic.intro'),
+                'summary' => $this->summary($checks),
+                'checks' => $checks,
+                'labels' => [
+                    'refresh' => __('portfolio.diagnostic.refresh'),
+                    'status' => [
+                        'up' => __('portfolio.diagnostic.status.up'),
+                        'warning' => __('portfolio.diagnostic.status.warning'),
+                        'down' => __('portfolio.diagnostic.status.down'),
+                    ],
+                ],
             ],
         ]);
     }
 
-    /**
-     * @return array{status:string,label:string,detail:string}
-     */
     private function checkPhp(): array
     {
         return version_compare(PHP_VERSION, '8.3.0', '>=')
-            ? $this->up('PHP OK', PHP_VERSION)
-            : $this->down('PHP trop ancien', PHP_VERSION.' détecté, PHP 8.3+ attendu.');
+            ? $this->up('php', 'platform', 'php', __('portfolio.diagnostic.checks.php.ok', ['version' => PHP_VERSION]))
+            : $this->down('php', 'platform', 'php', __('portfolio.diagnostic.checks.php.down', ['version' => PHP_VERSION]));
     }
 
-    /**
-     * @return array{status:string,label:string,detail:string}
-     */
     private function checkDatabase(): array
     {
         try {
             DB::connection()->getPdo();
 
-            return $this->up('Base de données OK', config('database.default'));
+            return $this->up('database', 'platform', 'database', __('portfolio.diagnostic.checks.database.ok', ['connection' => config('database.default')]));
         } catch (Throwable $exception) {
-            return $this->down('Base de données indisponible', $exception->getMessage());
+            return $this->down('database', 'platform', 'database', $exception->getMessage());
         }
     }
 
-    /**
-     * @return array{status:string,label:string,detail:string}
-     */
     private function checkCache(): array
     {
         try {
@@ -58,40 +75,26 @@ class HealthDiagnosticController extends Controller
             Cache::put($key, now()->toDateTimeString(), now()->addMinute());
 
             return Cache::has($key)
-                ? $this->up('Cache OK', 'Store : '.config('cache.default'))
-                : $this->down('Cache indisponible', 'La valeur de test est introuvable.');
+                ? $this->up('cache', 'platform', 'cache', __('portfolio.diagnostic.checks.cache.ok', ['store' => config('cache.default')]))
+                : $this->down('cache', 'platform', 'cache', __('portfolio.diagnostic.checks.cache.down'));
         } catch (Throwable $exception) {
-            return $this->down('Cache en erreur', $exception->getMessage());
+            return $this->down('cache', 'platform', 'cache', $exception->getMessage());
         }
     }
 
-    /**
-     * @return array{status:string,label:string,detail:string}
-     */
     private function checkQueueWorker(): array
     {
         if (config('queue.default') === 'sync') {
-            return $this->up('Queue synchrone', "QUEUE_CONNECTION=sync ; aucun worker séparé requis.");
+            return $this->up('queue', 'platform', 'queue', __('portfolio.diagnostic.checks.queue.sync'));
         }
 
         $heartbeat = Cache::get('diagnostics.queue_worker_heartbeat');
-        if (is_array($heartbeat) && isset($heartbeat['at'])) {
-            return $this->up(
-                'Worker actif',
-                sprintf(
-                    'Dernier signal Laravel : %s%s.',
-                    $heartbeat['at'],
-                    isset($heartbeat['pid']) ? ' - PID '.$heartbeat['pid'] : '',
-                ),
-            );
-        }
 
-        return $this->warning('Worker non confirmé', 'Aucun heartbeat de queue worker détecté.');
+        return is_array($heartbeat) && isset($heartbeat['at'])
+            ? $this->up('queue', 'platform', 'queue', __('portfolio.diagnostic.checks.queue.ok', ['date' => $heartbeat['at']]))
+            : $this->warning('queue', 'platform', 'queue', __('portfolio.diagnostic.checks.queue.warning'));
     }
 
-    /**
-     * @return array{status:string,label:string,detail:string}
-     */
     private function checkScheduler(): array
     {
         try {
@@ -101,34 +104,97 @@ class HealthDiagnosticController extends Controller
             $process->run();
 
             return $process->isSuccessful()
-                ? $this->up('Scheduler lisible', 'php artisan schedule:list OK')
-                : $this->warning('Scheduler non confirmé', trim($process->getErrorOutput() ?: $process->getOutput()));
+                ? $this->up('scheduler', 'platform', 'scheduler', __('portfolio.diagnostic.checks.scheduler.ok'))
+                : $this->warning('scheduler', 'platform', 'scheduler', trim($process->getErrorOutput() ?: $process->getOutput()));
         } catch (Throwable $exception) {
-            return $this->warning('Scheduler indéterminé', $exception->getMessage());
+            return $this->warning('scheduler', 'platform', 'scheduler', $exception->getMessage());
         }
     }
 
-    /**
-     * @return array{status:string,label:string,detail:string}
-     */
-    private function up(string $label, string $detail): array
+    private function checkProjectPortfolio(): array
     {
-        return ['status' => 'up', 'label' => $label, 'detail' => $detail];
+        $count = ClientProject::count();
+
+        return $count > 0
+            ? $this->up('projects', 'workflow', 'projects', __('portfolio.diagnostic.checks.projects.ok', ['count' => $count]))
+            : $this->warning('projects', 'workflow', 'projects', __('portfolio.diagnostic.checks.projects.warning'));
     }
 
-    /**
-     * @return array{status:string,label:string,detail:string}
-     */
-    private function warning(string $label, string $detail): array
+    private function checkPlanningGate(): array
     {
-        return ['status' => 'warning', 'label' => $label, 'detail' => $detail];
+        $ready = DeliveryPlan::where('status', 'ready_for_validation')->count();
+        $draft = DeliveryPlan::where('status', 'draft')->count();
+
+        return $ready > 0
+            ? $this->up('planning', 'workflow', 'planning', __('portfolio.diagnostic.checks.planning.ok', ['ready' => $ready, 'draft' => $draft]))
+            : $this->warning('planning', 'workflow', 'planning', __('portfolio.diagnostic.checks.planning.warning', ['draft' => $draft]));
     }
 
-    /**
-     * @return array{status:string,label:string,detail:string}
-     */
-    private function down(string $label, string $detail): array
+    private function checkBudgetReadiness(): array
     {
-        return ['status' => 'down', 'label' => $label, 'detail' => $detail];
+        $budgets = ProjectBudget::count();
+        $incomplete = ProjectBudget::where('margin_amount', '<=', 0)->count();
+
+        return $budgets > 0 && $incomplete === 0
+            ? $this->up('budgets', 'workflow', 'budgets', __('portfolio.diagnostic.checks.budgets.ok', ['count' => $budgets]))
+            : $this->warning('budgets', 'workflow', 'budgets', __('portfolio.diagnostic.checks.budgets.warning', ['count' => $budgets, 'incomplete' => $incomplete]));
+    }
+
+    private function checkImportFreshness(): array
+    {
+        $latest = ExternalImportRun::latest('finished_at')->first();
+
+        if (! $latest) {
+            return $this->warning('imports', 'workflow', 'imports', __('portfolio.diagnostic.checks.imports.missing'));
+        }
+
+        return $latest->warnings_count > 0
+            ? $this->warning('imports', 'workflow', 'imports', __('portfolio.diagnostic.checks.imports.warning', ['source' => $latest->source, 'warnings' => $latest->warnings_count]))
+            : $this->up('imports', 'workflow', 'imports', __('portfolio.diagnostic.checks.imports.ok', ['source' => $latest->source, 'count' => $latest->records_count]));
+    }
+
+    private function checkActivityTrail(): array
+    {
+        $count = ActivityLog::count();
+
+        return $count > 0
+            ? $this->up('activity', 'workflow', 'activity', __('portfolio.diagnostic.checks.activity.ok', ['count' => $count]))
+            : $this->warning('activity', 'workflow', 'activity', __('portfolio.diagnostic.checks.activity.warning'));
+    }
+
+    private function summary(array $checks): array
+    {
+        return [
+            ['label' => __('portfolio.diagnostic.summary.ready'), 'value' => collect($checks)->where('status', 'up')->count(), 'detail' => __('portfolio.diagnostic.summary.ready_detail')],
+            ['label' => __('portfolio.diagnostic.summary.watch'), 'value' => collect($checks)->where('status', 'warning')->count(), 'detail' => __('portfolio.diagnostic.summary.watch_detail')],
+            ['label' => __('portfolio.diagnostic.summary.blocked'), 'value' => collect($checks)->where('status', 'down')->count(), 'detail' => __('portfolio.diagnostic.summary.blocked_detail')],
+        ];
+    }
+
+    private function up(string $key, string $group, string $area, string $detail): array
+    {
+        return $this->check($key, $group, $area, 'up', $detail);
+    }
+
+    private function warning(string $key, string $group, string $area, string $detail): array
+    {
+        return $this->check($key, $group, $area, 'warning', $detail);
+    }
+
+    private function down(string $key, string $group, string $area, string $detail): array
+    {
+        return $this->check($key, $group, $area, 'down', $detail);
+    }
+
+    private function check(string $key, string $group, string $area, string $status, string $detail): array
+    {
+        return [
+            'key' => $key,
+            'group' => __('portfolio.diagnostic.groups.'.$group),
+            'area' => __('portfolio.diagnostic.areas.'.$area),
+            'label' => __('portfolio.diagnostic.labels.'.$key),
+            'status' => $status,
+            'detail' => $detail,
+        ];
     }
 }

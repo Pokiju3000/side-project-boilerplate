@@ -51,4 +51,17 @@ class AccessTest extends TestCase
         $this->post('/auth/demo')
             ->assertNotFound();
     }
+
+    public function test_guest_can_switch_to_french(): void
+    {
+        $this->from('/login')
+            ->get('/locale/fr')
+            ->assertRedirect('/login')
+            ->assertSessionHas('portfolio_locale', 'fr');
+
+        $this->withSession(['portfolio_locale' => 'fr'])
+            ->get('/login')
+            ->assertOk()
+            ->assertSee('Une démo Laravel neutre');
+    }
 }

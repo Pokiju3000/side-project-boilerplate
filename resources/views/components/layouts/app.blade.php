@@ -8,7 +8,7 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700" rel="stylesheet" />
 
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @vite(['resources/css/app.css', 'resources/js/app.jsx'])
     </head>
     <body class="portal-page portal-scope-starter min-h-screen bg-[#f3f7fc] text-[#16324f] antialiased">
         <div class="min-h-screen">
@@ -21,8 +21,8 @@
                                     DO
                                 </div>
                                 <div class="min-w-0">
-                                    <p class="truncate text-sm font-semibold text-[#16324f]">{{ config('app.name', 'DeliveryOps') }}</p>
-                                    <p class="truncate text-xs text-[#6b7c90]">Portfolio-safe operations platform</p>
+                                    <p class="truncate text-sm font-semibold text-[#16324f]">{{ __('portfolio.app_name') }}</p>
+                                    <p class="truncate text-xs text-[#6b7c90]">{{ __('portfolio.nav.subtitle') }}</p>
                                 </div>
                             </a>
 
@@ -30,22 +30,24 @@
                                 <form method="POST" action="{{ route('logout') }}" class="lg:hidden">
                                     @csrf
                                     <button type="submit" class="rounded-lg border border-[#bdd0ea] bg-white px-3 py-2 text-sm font-semibold text-[#244566]">
-                                        Logout
+                                        {{ __('portfolio-locale::ui.logout') }}
                                     </button>
                                 </form>
                             @endauth
                         </div>
 
                         <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
+                            @include('portfolio-locale::switcher')
+
                             @auth
                                 <nav class="flex flex-wrap gap-2">
                                     @foreach ([
-                                        ['Dashboard', 'dashboard'],
-                                        ['Projects', 'projects.index'],
-                                        ['Validation', 'operations.validation'],
-                                        ['Imports', 'operations.imports'],
-                                        ['Resources', 'operations.resources'],
-                                        ['Diagnostic', 'admin.diagnostics'],
+                                        [__('portfolio.nav.dashboard'), 'dashboard'],
+                                        [__('portfolio.nav.projects'), 'projects.index'],
+                                        [__('portfolio.nav.validation'), 'operations.validation'],
+                                        [__('portfolio.nav.imports'), 'operations.imports'],
+                                        [__('portfolio.nav.resources'), 'operations.resources'],
+                                        [__('portfolio.nav.diagnostic'), 'admin.diagnostics'],
                                     ] as [$label, $route])
                                         <a
                                             href="{{ route($route) }}"
@@ -60,19 +62,19 @@
                                     <span class="rounded-full bg-[#eef4ff] px-4 py-2 text-sm font-medium text-[#2f58e8]">
                                         {{ auth()->user()->name }}
                                         @if (session('demo_access'))
-                                            <span class="ml-2 text-xs uppercase tracking-[0.14em]">Demo</span>
+                                            <span class="ml-2 text-xs uppercase tracking-[0.14em]">{{ __('portfolio-locale::ui.demo') }}</span>
                                         @endif
                                     </span>
                                     <form method="POST" action="{{ route('logout') }}">
                                         @csrf
                                         <button type="submit" class="rounded-lg border border-[#bdd0ea] bg-white px-4 py-2 text-sm font-semibold text-[#244566] transition hover:bg-[#f8fbff]">
-                                            Logout
+                                            {{ __('portfolio-locale::ui.logout') }}
                                         </button>
                                     </form>
                                 </div>
                             @else
                                 <a href="{{ route('azure.login') }}" class="rounded-lg bg-[#2f58e8] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#284dca]">
-                                    Sign in
+                                    {{ __('portfolio-locale::ui.sign_in') }}
                                 </a>
                             @endauth
                         </div>

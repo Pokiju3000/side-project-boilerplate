@@ -22,16 +22,16 @@ class DeliveryOpsController extends Controller
 
         return view('dashboard', [
             'metrics' => [
-                ['label' => 'Active projects', 'value' => $projects->count(), 'detail' => 'Client mandates tracked end to end.'],
-                ['label' => 'Plans to validate', 'value' => $validationRows->where('can_validate', true)->count(), 'detail' => 'Delivery plans waiting at a quality gate.'],
-                ['label' => 'Budget gaps', 'value' => $validationRows->filter(fn (array $row): bool => str_contains($row['issue'], 'Budget'))->count(), 'detail' => 'Projects ready for financial review.'],
-                ['label' => 'Import warnings', 'value' => ExternalImportRun::query()->sum('warnings_count'), 'detail' => 'External records needing attention.'],
+                ['label' => __('portfolio.metrics.active_projects.label'), 'value' => $projects->count(), 'detail' => __('portfolio.metrics.active_projects.detail')],
+                ['label' => __('portfolio.metrics.plans_to_validate.label'), 'value' => $validationRows->where('can_validate', true)->count(), 'detail' => __('portfolio.metrics.plans_to_validate.detail')],
+                ['label' => __('portfolio.metrics.budget_gaps.label'), 'value' => $validationRows->filter(fn (array $row): bool => str_contains($row['issue_key'], 'Budget'))->count(), 'detail' => __('portfolio.metrics.budget_gaps.detail')],
+                ['label' => __('portfolio.metrics.import_warnings.label'), 'value' => ExternalImportRun::query()->sum('warnings_count'), 'detail' => __('portfolio.metrics.import_warnings.detail')],
             ],
             'projectStates' => [
-                ['label' => 'Intake', 'value' => $projects->where('status', 'intake')->count()],
-                ['label' => 'Planning', 'value' => $projects->where('status', 'planning')->count()],
-                ['label' => 'Ready for validation', 'value' => $projects->where('status', 'ready_for_validation')->count()],
-                ['label' => 'Validated', 'value' => $projects->where('status', 'validated')->count()],
+                ['label' => __('portfolio.status.intake'), 'value' => $projects->where('status', 'intake')->count()],
+                ['label' => __('portfolio.status.planning'), 'value' => $projects->where('status', 'planning')->count()],
+                ['label' => __('portfolio.status.ready_for_validation'), 'value' => $projects->where('status', 'ready_for_validation')->count()],
+                ['label' => __('portfolio.status.validated'), 'value' => $projects->where('status', 'validated')->count()],
             ],
             'priorityProjects' => $projects->take(6),
             'validationRows' => $validationRows->take(5),
@@ -86,10 +86,10 @@ class DeliveryOpsController extends Controller
 
         return view('operations.validation', [
             'summaryCards' => [
-                ['label' => 'Ready for validation', 'value' => $rows->where('can_validate', true)->count(), 'tone' => 'info'],
-                ['label' => 'Blocked projects', 'value' => $rows->where('tone', 'danger')->count(), 'tone' => 'danger'],
-                ['label' => 'Budget issues', 'value' => $rows->filter(fn (array $row): bool => str_contains($row['issue'], 'Budget'))->count(), 'tone' => 'warning'],
-                ['label' => 'Planning gaps', 'value' => $rows->filter(fn (array $row): bool => str_contains($row['issue'], 'Plan'))->count(), 'tone' => 'warning'],
+                ['label' => __('portfolio.validation.summary.ready'), 'value' => $rows->where('can_validate', true)->count(), 'tone' => 'info'],
+                ['label' => __('portfolio.validation.summary.blocked'), 'value' => $rows->where('tone', 'danger')->count(), 'tone' => 'danger'],
+                ['label' => __('portfolio.validation.summary.budget'), 'value' => $rows->filter(fn (array $row): bool => str_contains($row['issue_key'], 'Budget'))->count(), 'tone' => 'warning'],
+                ['label' => __('portfolio.validation.summary.planning'), 'value' => $rows->filter(fn (array $row): bool => str_contains($row['issue_key'], 'Plan'))->count(), 'tone' => 'warning'],
             ],
             'rows' => $rows,
         ]);
@@ -142,8 +142,9 @@ class DeliveryOpsController extends Controller
 
                 return [
                     'project' => $project,
-                    'owner' => $project->owner?->name ?? 'Unassigned',
-                    'issue' => $issue,
+                    'owner' => $project->owner?->name ?? __('portfolio.dashboard.unassigned'),
+                    'issue_key' => $issue,
+                    'issue' => __('portfolio.validation.issues.'.$issue),
                     'tone' => $tone,
                     'planned_hours' => $plannedHours,
                     'allocated_hours' => $allocatedHours,
