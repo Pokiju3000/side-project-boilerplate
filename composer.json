@@ -22,9 +22,13 @@
         "phpunit/phpunit": "^12.5.12"
     },
     "autoload": {
+        "files": [
+            "packages/PortfolioLocale/src/helpers.php"
+        ],
         "psr-4": {
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
+            "PortfolioLocale\\": "packages/PortfolioLocale/src/",
             "Database\\Seeders\\": "database/seeders/"
         }
     },

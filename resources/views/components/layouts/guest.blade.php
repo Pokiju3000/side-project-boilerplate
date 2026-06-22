@@ -10,9 +10,12 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700" rel="stylesheet" />
 
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @vite(['resources/css/app.css', 'resources/js/app.jsx'])
     </head>
     <body class="min-h-screen bg-[#fcf9f6] font-sans text-[#4c301e] antialiased">
+        <div class="fixed right-4 top-4 z-50">
+            @include('portfolio-locale::switcher')
+        </div>
         {{ $slot }}
     </body>
 </html>
